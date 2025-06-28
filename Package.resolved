@@ -1,0 +1,15 @@
+{
+  "originHash" : "48c27c2acaa6b917100880d588eb4912d81984c3eee86250b4f392430891b6f1",
+  "pins" : [
+    {
+      "identity" : "alt-rfid-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ZebraDevs/alt-rfid-ios-sdk",
+      "state" : {
+        "revision" : "364c043c7a0b0e8a2e1d0e627dc610f3ea112932",
+        "version" : "0.1.14"
+      }
+    }
+  ],
+  "version" : 3
+}
