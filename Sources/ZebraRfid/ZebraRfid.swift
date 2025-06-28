@@ -375,6 +375,34 @@ public enum RfidBatchModeConfig: UInt32, Sendable, SRFIDConvertable {
   }
 }
 
+public enum RfidTidConfig: UInt32, Sendable, SRFIDConvertable {
+  case show = 0
+  case hideSome = 1
+  case hideAll = 2
+
+  init(_ config: SRFID_CONFIG_TID) {
+    self.init(rawValue: config.rawValue)!
+  }
+
+  var srfidValue: SRFID_CONFIG_TID {
+    SRFID_CONFIG_TID(self.rawValue)
+  }
+}
+
+public enum RfidRangeConfig: UInt32, Sendable, SRFIDConvertable {
+  case none = 0
+  case toggle = 1
+  case reduce = 2
+
+  init(_ config: SRFID_CONFIG_RANGE) {
+    self.init(rawValue: config.rawValue)!
+  }
+
+  var srfidValue: SRFID_CONFIG_RANGE {
+    SRFID_CONFIG_RANGE(self.rawValue)
+  }
+}
+
 public struct RfidReaderInfo: Identifiable, Equatable, Sendable, SRFIDConvertable {
   public let id: Int32
   public let connectionType: RfidConnectionType
@@ -695,16 +723,16 @@ public struct RfidReportConfig: Equatable, Sendable, SRFIDConvertable {
 }
 
 public struct RfidSingulationConfig: Equatable, Sendable, SRFIDConvertable {
-  public let slFlag: RfidSLFlag
-  public let session: RfidSession
-  public let inventoryState: RfidInventoryState
-  public let tagPopulation: Int32
+  public let slFlag: RfidSLFlag?
+  public let session: RfidSession?
+  public let inventoryState: RfidInventoryState?
+  public let tagPopulation: Int32?
 
   init(
-    slFlag: RfidSLFlag,
-    session: RfidSession,
-    inventoryState: RfidInventoryState,
-    tagPopulation: Int32
+    slFlag: RfidSLFlag?,
+    session: RfidSession?,
+    inventoryState: RfidInventoryState?,
+    tagPopulation: Int32?
   ) {
     self.slFlag = slFlag
     self.session = session
@@ -721,10 +749,18 @@ public struct RfidSingulationConfig: Equatable, Sendable, SRFIDConvertable {
 
   var srfidValue: srfidSingulationConfig {
     let config = srfidSingulationConfig()
-    config.setSlFlag(slFlag.srfidValue)
-    config.setSession(session.srfidValue)
-    config.setInventoryState(inventoryState.srfidValue)
-    config.setTagPopulation(tagPopulation)
+    if let slFlag {
+      config.setSlFlag(slFlag.srfidValue)
+    }
+    if let session {
+      config.setSession(session.srfidValue)
+    }
+    if let inventoryState {
+      config.setInventoryState(inventoryState.srfidValue)
+    }
+    if let tagPopulation {
+      config.setTagPopulation(tagPopulation)
+    }
     return config
   }
 }
@@ -801,20 +837,20 @@ public struct RfidLinkProfile: Equatable, Sendable, SRFIDConvertable {
 
 public struct RfidAntennaConfig: Equatable, Sendable, SRFIDConvertable {
   public let power: Int16
-  public let linkProfileIndex: Int16
-  public let tari: Int32
+  public let linkProfileIndex: Int16?
+  public let tari: Int32?
   public let select: Bool
 
   public init(
     power: Int16,
-    linkProfileIndex: Int16,
-    tari: Int32,
-    select: Bool
+    select: Bool,
+    linkProfileIndex: Int16? = nil,
+    tari: Int32? = nil,
   ) {
     self.power = power
+    self.select = select
     self.linkProfileIndex = linkProfileIndex
     self.tari = tari
-    self.select = select
   }
 
   init(_ antennaConfig: srfidAntennaConfiguration) {
@@ -827,9 +863,13 @@ public struct RfidAntennaConfig: Equatable, Sendable, SRFIDConvertable {
   var srfidValue: srfidAntennaConfiguration {
     let antennaConfig = srfidAntennaConfiguration()
     antennaConfig.setPower(power)
-    antennaConfig.setLinkProfileIdx(linkProfileIndex)
-    antennaConfig.setTari(tari)
     antennaConfig.setDoSelect(select)
+    if let linkProfileIndex {
+      antennaConfig.setLinkProfileIdx(linkProfileIndex)
+    }
+    if let tari {
+      antennaConfig.setTari(tari)
+    }
     return antennaConfig
   }
 }
@@ -903,39 +943,36 @@ public struct RfidTagReportConfig: Equatable, Sendable, SRFIDConvertable {
 }
 
 public struct RfidStartTriggerConfig: Equatable, Sendable, SRFIDConvertable {
+  public let startOnHandheldTrigger: Bool
   public let triggerType: RfidTriggerType?
   public let startDelay: UInt32?
   public let repeatMonitoring: Bool?
 
   public init(
+    startOnHandheldTrigger: Bool,
     triggerType: RfidTriggerType?,
     startDelay: UInt32? = nil,
     repeatMonitoring: Bool? = nil
   ) {
+    self.startOnHandheldTrigger = startOnHandheldTrigger
     self.triggerType = triggerType
     self.startDelay = startDelay
     self.repeatMonitoring = repeatMonitoring
   }
 
   init(_ startTriggerConfig: srfidStartTriggerConfig) {
-    if startTriggerConfig.getStartOnHandheldTrigger() {
-      triggerType = .init(startTriggerConfig.getTriggerType())
-      startDelay = startTriggerConfig.getStartDelay()
-      repeatMonitoring = startTriggerConfig.getRepeatMonitoring()
-    } else {
-      triggerType = nil
-      startDelay = nil
-      repeatMonitoring = nil
-    }
+    startOnHandheldTrigger = startTriggerConfig.getStartOnHandheldTrigger()
+    triggerType = .init(startTriggerConfig.getTriggerType())
+    startDelay = startTriggerConfig.getStartDelay()
+    repeatMonitoring = startTriggerConfig.getRepeatMonitoring()
   }
 
   var srfidValue: srfidStartTriggerConfig {
     let startTriggerConfig = srfidStartTriggerConfig()
-    guard let triggerType else {
-      return startTriggerConfig
+    startTriggerConfig.setStartOnHandheldTrigger(startOnHandheldTrigger)
+    if let triggerType {
+      startTriggerConfig.setTriggerType(triggerType.srfidValue)
     }
-    startTriggerConfig.setStartOnHandheldTrigger(true)
-    startTriggerConfig.setTriggerType(triggerType.srfidValue)
     if let startDelay {
       startTriggerConfig.setStartDelay(startDelay)
     }
@@ -947,6 +984,7 @@ public struct RfidStartTriggerConfig: Equatable, Sendable, SRFIDConvertable {
 }
 
 public struct RfidStopTriggerConfig: Equatable, Sendable, SRFIDConvertable {
+  public let stopOnHandheldTrigger: Bool
   public let triggerType: RfidTriggerType?
   public let tagCount: UInt32?
   public let timeout: UInt32?
@@ -954,12 +992,14 @@ public struct RfidStopTriggerConfig: Equatable, Sendable, SRFIDConvertable {
   public let accessCount: UInt32?
 
   public init(
+    stopOnHandheldTrigger: Bool,
     triggerType: RfidTriggerType?,
     tagCount: UInt32? = nil,
     timeout: UInt32? = nil,
     inventoryCount: UInt32? = nil,
     accessCount: UInt32? = nil
   ) {
+    self.stopOnHandheldTrigger = stopOnHandheldTrigger
     self.triggerType = triggerType
     self.tagCount = tagCount
     self.timeout = timeout
@@ -968,30 +1008,23 @@ public struct RfidStopTriggerConfig: Equatable, Sendable, SRFIDConvertable {
   }
 
   init(_ stopTriggerConfig: srfidStopTriggerConfig) {
-    if stopTriggerConfig.getStopOnHandheldTrigger() {
-      triggerType = .init(stopTriggerConfig.getTriggerType())
-      tagCount = stopTriggerConfig.getStopOnTagCount() ? stopTriggerConfig.getStopTagCount() : nil
-      timeout = stopTriggerConfig.getStopOnTimeout() ? stopTriggerConfig.getStopTimeout() : nil
-      inventoryCount =
-        stopTriggerConfig.getStopOnInventoryCount()
-        ? stopTriggerConfig.getStopInventoryCount() : nil
-      accessCount =
-        stopTriggerConfig.getStopOnAccessCount() ? stopTriggerConfig.getStopAccessCount() : nil
-    } else {
-      triggerType = nil
-      tagCount = nil
-      timeout = nil
-      inventoryCount = nil
-      accessCount = nil
-    }
+    stopOnHandheldTrigger = stopTriggerConfig.getStopOnHandheldTrigger()
+    triggerType = .init(stopTriggerConfig.getTriggerType())
+    tagCount = stopTriggerConfig.getStopOnTagCount() ? stopTriggerConfig.getStopTagCount() : nil
+    timeout = stopTriggerConfig.getStopOnTimeout() ? stopTriggerConfig.getStopTimeout() : nil
+    inventoryCount =
+      stopTriggerConfig.getStopOnInventoryCount()
+      ? stopTriggerConfig.getStopInventoryCount() : nil
+    accessCount =
+      stopTriggerConfig.getStopOnAccessCount() ? stopTriggerConfig.getStopAccessCount() : nil
   }
 
   var srfidValue: srfidStopTriggerConfig {
     let stopConfig = srfidStopTriggerConfig()
-    guard let triggerType else {
-      return stopConfig
+    stopConfig.setStopOnHandheldTrigger(stopOnHandheldTrigger)
+    if let triggerType {
+      stopConfig.setTriggerType(triggerType.srfidValue)
     }
-    stopConfig.setTriggerType(triggerType.srfidValue)
     if let tagCount {
       stopConfig.setStopOnTagCount(true)
       stopConfig.setStopTagCount(tagCount)
@@ -1081,30 +1114,32 @@ public struct RfidRegionInfo: Equatable, Sendable {
 
 public struct RfidRegulatoryConfig: Equatable, Sendable, SRFIDConvertable {
   public let regionCode: String
-  public let enabledChannelsList: [String]
   public let hoppingConfig: RfidHoppingConfig
+  public let enabledChannelsList: [String]?
 
   public init(
     regionCode: String,
-    enabledChannelsList: [String],
-    hoppingConfig: RfidHoppingConfig
+    hoppingConfig: RfidHoppingConfig,
+    enabledChannelsList: [String]? = nil
   ) {
     self.regionCode = regionCode
-    self.enabledChannelsList = enabledChannelsList
     self.hoppingConfig = hoppingConfig
+    self.enabledChannelsList = enabledChannelsList
   }
 
   init(_ regulatoryConfig: srfidRegulatoryConfig) {
     regionCode = regulatoryConfig.getRegionCode()
-    enabledChannelsList = regulatoryConfig.getEnabledChannelsList().compactMap { $0 as? String }
     hoppingConfig = .init(regulatoryConfig.getHoppingConfig())
+    enabledChannelsList = regulatoryConfig.getEnabledChannelsList().compactMap { $0 as? String }
   }
 
   var srfidValue: srfidRegulatoryConfig {
     let config = srfidRegulatoryConfig()
     config.setRegionCode(regionCode)
-    config.setEnabledChannelsList(enabledChannelsList)
     config.setHopping(hoppingConfig.srfidValue)
+    if let enabledChannelsList {
+      config.setEnabledChannelsList(enabledChannelsList)
+    }
     return config
   }
 }
@@ -1353,5 +1388,50 @@ public struct RfidWlanScanEntry: Equatable, Sendable, SRFIDConvertable {
     scanList.setWlanLevel(level)
     scanList.setWlanMacAddress(macAddress)
     return scanList
+  }
+}
+
+public struct RfidUntraceableConfig: Equatable, Sendable, SRFIDConvertable {
+  public let assertU: Bool
+  public let showEPC: Bool
+  public let epcLength: Int32
+  public let tid: RfidTidConfig
+  public let showUser: Bool
+  public let range: RfidRangeConfig
+
+  init(
+    assertU: Bool,
+    showEPC: Bool,
+    epcLength: Int32,
+    tid: RfidTidConfig,
+    showUser: Bool,
+    range: RfidRangeConfig
+  ) {
+    self.assertU = assertU
+    self.showEPC = showEPC
+    self.epcLength = epcLength
+    self.tid = tid
+    self.showUser = showUser
+    self.range = range
+  }
+
+  init(_ config: srfidUntraceableConfig) {
+    assertU = config.getAssertU()
+    showEPC = config.getShowEpc()
+    epcLength = config.getEpcLen()
+    tid = .init(config.getTid())
+    showUser = config.getShowUser()
+    range = .init(config.getRange())
+  }
+
+  var srfidValue: srfidUntraceableConfig {
+    let config = srfidUntraceableConfig()
+    config.setAssertU(assertU)
+    config.setShowEpc(showEPC)
+    config.setEpcLen(epcLength)
+    config.setTid(tid.srfidValue)
+    config.setShowUser(showUser)
+    config.setRange(range.srfidValue)
+    return config
   }
 }

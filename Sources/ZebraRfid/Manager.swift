@@ -89,7 +89,7 @@ public actor RfidSdkManager {
   }
 
   public func establishAsciiConnection(readerID: Int32, password: String? = nil) throws {
-    try checkResult(api.srfidEstablishAsciiConnection(readerID, aPassword: password ?? ""))
+    try checkResult(api.srfidEstablishAsciiConnection(readerID, aPassword: password))
   }
 
   public func enableAvailableReadersDetection(_ enable: Bool = true) throws {
@@ -344,7 +344,7 @@ public actor RfidSdkManager {
     return regions!.map { RfidSupportedRegion($0 as! srfidRegionInfo) }
   }
 
-  public func getRegionInfo(readerID: Int32, regionCode: String) throws -> RfidRegionInfo {
+  public func getRegionInfo(readerID: Int32, regionCode: String?) throws -> RfidRegionInfo {
     var supportedChannels: NSMutableArray? = .init()
     var hoppingConfigurable: ObjCBool = false
     try checkResult { api, statusMessage in
@@ -452,7 +452,7 @@ public actor RfidSdkManager {
     offset: Int16 = 0,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -478,7 +478,7 @@ public actor RfidSdkManager {
     offset: Int16 = 0,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -505,7 +505,7 @@ public actor RfidSdkManager {
     blockWrite: Bool = false,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -533,7 +533,7 @@ public actor RfidSdkManager {
     blockWrite: Bool = false,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -553,7 +553,7 @@ public actor RfidSdkManager {
   }
 
   public func killTag(readerID: Int32, epc: String, password: String? = nil) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -573,7 +573,7 @@ public actor RfidSdkManager {
     accessCriteria: RfidAccessCriteria,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -595,7 +595,7 @@ public actor RfidSdkManager {
     accessPermissions: RfidAccessPermission,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -619,7 +619,7 @@ public actor RfidSdkManager {
     accessPermissions: RfidAccessPermission,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -686,7 +686,7 @@ public actor RfidSdkManager {
     offset: Int16 = 0,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -712,7 +712,7 @@ public actor RfidSdkManager {
     offset: Int16 = 0,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -740,7 +740,7 @@ public actor RfidSdkManager {
     blockMask: String,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -770,7 +770,7 @@ public actor RfidSdkManager {
     blockMask: String,
     password: String? = nil
   ) throws -> RfidTagData {
-    let password = try decodeHex(password ?? "00", name: "password")
+    let password = try checkPassword(password)
 
     var tagData: srfidTagData? = .init()
     try checkResult { api, statusMessage in
@@ -829,6 +829,62 @@ public actor RfidSdkManager {
     }
   }
 
+  public func authenticate(
+    readerID: Int32,
+    accessCriteria: RfidAccessCriteria,
+    accessConfig: RfidAccessConfig,
+    messageLength: Int32,
+    messageData: String,
+    responseLength: Int32,
+    cryptoSuiteIndicator: Int32,
+    sendResponse: Bool = false,
+    includeLengthInReply: Bool = true,
+    password: String? = nil
+  ) throws {
+    let password = try checkPassword(password)
+
+    try checkResult { api, statusMessage in
+      return api.srfidAuthenticate(
+        readerID,
+        aAccessCriteria: accessCriteria.srfidValue,
+        aAccessConfig: accessConfig.srfidValue,
+        aPassword: password,
+        aMsgLength: messageLength,
+        aMsgData: messageData,
+        aRespLength: responseLength,
+        aCsi: cryptoSuiteIndicator,
+        aDoSendRes: sendResponse,
+        aDoIncresplen: includeLengthInReply,
+        aStatusMessage: &statusMessage
+      )
+    }
+  }
+
+  public func untraceable(
+    readerID: Int32,
+    accessCriteria: RfidAccessCriteria,
+    accessConfig: RfidAccessConfig,
+    untraceableConfig: RfidUntraceableConfig,
+    password: String? = nil
+  ) throws {
+    let password = try checkPassword(password)
+
+    try checkResult { api, statusMessage in
+      return api.srfidUntraceable(
+        readerID,
+        aAccessCriteria: accessCriteria.srfidValue,
+        aAccessConfig: accessConfig.srfidValue,
+        aPassword: password,
+        aUntraceableConfig: untraceableConfig.srfidValue,
+        aStatusMessage: &statusMessage
+      )
+    }
+  }
+
+  public func enableDebugLogs(_ enable: Bool = true) throws {
+    try checkResult(enable ? api.srfidEnableDebugLog() : api.srfidDisableDebugLog())
+  }
+
   func checkResult(_ result: SRFID_RESULT) throws {
     let rfidStatus = RfidStatus(result)
     guard rfidStatus == .success else {
@@ -851,11 +907,15 @@ public actor RfidSdkManager {
     }
   }
 
-  func decodeHex(_ input: String, name: String) throws -> Int {
+  func checkPassword(_ input: String?) throws -> Int {
+    guard let input else {
+      return 0
+    }
+
     if let value = Int(input, radix: 16) {
       return value
     } else {
-      throw RfidError.badParameter(name)
+      throw RfidError.badParameter("password")
     }
   }
 }
